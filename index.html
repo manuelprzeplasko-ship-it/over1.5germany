@@ -170,6 +170,90 @@ Wybierz ligę, aby uruchomić walidację.
         a nie do przewidywania pewnych wyników.
       </p>
     </section>
+    <section id="over15-generator" style="margin:30px 0;">
+  <h2>Generator Over 1,5 — TRIPLE / FOURFOLD</h2>
+
+  <p style="color:#aab8d0;">
+    Wpisz datę, ligę, gospodarzy, gości i kurs Over 1,5.
+    Dodaj minimum 3 mecze. Generator wybierze tylko
+    kombinacje spełniające warunki modelu.
+  </p>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0;">
+    <label>
+      Data meczu
+      <input id="g15-date" type="date"
+        style="display:block;padding:10px;">
+    </label>
+
+    <label>
+      Liga
+      <select id="g15-league"
+        style="display:block;padding:10px;">
+        <option value="D1">Bundesliga</option>
+        <option value="D2">2. Bundesliga</option>
+      </select>
+    </label>
+
+    <label>
+      Gospodarze
+      <select id="g15-home"
+        style="display:block;padding:10px;min-width:160px;">
+        <option value="">Wybierz drużynę</option>
+      </select>
+    </label>
+
+    <label>
+      Goście
+      <select id="g15-away"
+        style="display:block;padding:10px;min-width:160px;">
+        <option value="">Wybierz drużynę</option>
+      </select>
+    </label>
+
+    <label>
+      Kurs Over 1,5
+      <input id="g15-odds" type="text"
+        inputmode="decimal" placeholder="np. 1,35"
+        style="display:block;padding:10px;width:110px;">
+    </label>
+  </div>
+
+  <button type="button" id="g15-add"
+    style="padding:12px 18px;background:#2563eb;color:white;border:0;border-radius:8px;cursor:pointer;">
+    + Dodaj mecz
+  </button>
+
+  <button type="button" id="g15-clear"
+    style="padding:12px 18px;background:#475569;color:white;border:0;border-radius:8px;cursor:pointer;">
+    Wyczyść listę
+  </button>
+
+  <h3>Dodane mecze</h3>
+  <div id="g15-list">Brak dodanych meczów.</div>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;">
+    <button type="button" id="g15-triple"
+      style="padding:14px 20px;background:#b68b35;color:#101827;border:0;border-radius:8px;font-weight:bold;cursor:pointer;">
+      GENERUJ TRIPLE
+    </button>
+
+    <button type="button" id="g15-fourfold"
+      style="padding:14px 20px;background:#b68b35;color:#101827;border:0;border-radius:8px;font-weight:bold;cursor:pointer;">
+      GENERUJ FOURFOLD
+    </button>
+  </div>
+
+  <pre id="g15-result"
+    style="white-space:pre-wrap;overflow-wrap:anywhere;background:#101b2f;padding:16px;border-radius:10px;margin-top:20px;color:#e5edf7;">
+Generator czeka na mecze.
+  </pre>
+
+  <p style="color:#aab8d0;font-size:13px;">
+    EV jest szacunkiem modelu, nie gwarancją zysku.
+    Prawdopodobieństwo kuponu zakłada niezależność spotkań.
+  </p>
+</section>
   </main>
 
   <footer>
@@ -462,90 +546,7 @@ function predictOver15(history, home, away, recent, poissonWeight) {
 </script>
 
   
-<section id="over15-generator" style="margin:30px 0;">
-  <h2>Generator Over 1,5 — TRIPLE / FOURFOLD</h2>
 
-  <p style="color:#aab8d0;">
-    Wpisz datę, ligę, gospodarzy, gości i kurs Over 1,5.
-    Dodaj minimum 3 mecze. Generator wybierze tylko
-    kombinacje spełniające warunki modelu.
-  </p>
-
-  <div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0;">
-    <label>
-      Data meczu
-      <input id="g15-date" type="date"
-        style="display:block;padding:10px;">
-    </label>
-
-    <label>
-      Liga
-      <select id="g15-league"
-        style="display:block;padding:10px;">
-        <option value="D1">Bundesliga</option>
-        <option value="D2">2. Bundesliga</option>
-      </select>
-    </label>
-
-    <label>
-      Gospodarze
-      <select id="g15-home"
-        style="display:block;padding:10px;min-width:160px;">
-        <option value="">Wybierz drużynę</option>
-      </select>
-    </label>
-
-    <label>
-      Goście
-      <select id="g15-away"
-        style="display:block;padding:10px;min-width:160px;">
-        <option value="">Wybierz drużynę</option>
-      </select>
-    </label>
-
-    <label>
-      Kurs Over 1,5
-      <input id="g15-odds" type="text"
-        inputmode="decimal" placeholder="np. 1,35"
-        style="display:block;padding:10px;width:110px;">
-    </label>
-  </div>
-
-  <button type="button" id="g15-add"
-    style="padding:12px 18px;background:#2563eb;color:white;border:0;border-radius:8px;cursor:pointer;">
-    + Dodaj mecz
-  </button>
-
-  <button type="button" id="g15-clear"
-    style="padding:12px 18px;background:#475569;color:white;border:0;border-radius:8px;cursor:pointer;">
-    Wyczyść listę
-  </button>
-
-  <h3>Dodane mecze</h3>
-  <div id="g15-list">Brak dodanych meczów.</div>
-
-  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;">
-    <button type="button" id="g15-triple"
-      style="padding:14px 20px;background:#b68b35;color:#101827;border:0;border-radius:8px;font-weight:bold;cursor:pointer;">
-      GENERUJ TRIPLE
-    </button>
-
-    <button type="button" id="g15-fourfold"
-      style="padding:14px 20px;background:#b68b35;color:#101827;border:0;border-radius:8px;font-weight:bold;cursor:pointer;">
-      GENERUJ FOURFOLD
-    </button>
-  </div>
-
-  <pre id="g15-result"
-    style="white-space:pre-wrap;overflow-wrap:anywhere;background:#101b2f;padding:16px;border-radius:10px;margin-top:20px;color:#e5edf7;">
-Generator czeka na mecze.
-  </pre>
-
-  <p style="color:#aab8d0;font-size:13px;">
-    EV jest szacunkiem modelu, nie gwarancją zysku.
-    Prawdopodobieństwo kuponu zakłada niezależność spotkań.
-  </p>
-</section>
 
 <script src="./generator15.js"></script>
 
