@@ -1,0 +1,93 @@
+
+name: Aktualizacja danych Germany Over 1.5
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "25 7 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Pobierz repozytorium
+        uses: actions/checkout@v4
+
+      - name: Pobierz baze meczow z Germany Over 2.5
+        run: |
+          mkdir -p data
+
+          curl --fail --location --retry 3 \
+            --silent --show-error \
+            "https://raw.githubusercontent.com/manuelprzeplasko-ship-it/over2.5germany/main/data/all_matches.json" \
+            -o data/all_matches.json
+
+      - name: Sprawdz poprawnosc danych
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("data/all_matches.json")
+
+          with path.open(encoding="utf-8") as f:
+              matches = json.load(f)
+
+          if not isinstance(matches, list):
+              raise ValueError("Baza nie jest lista meczow")
+
+          if len(matches) < 100:
+              raise ValueError("Za malo meczow w bazie")
+
+          required = {
+              "league", "date", "home", "away",
+              "home_goals", "away_goals"
+          }
+
+          for match in matches:
+              if not isinstance(match, dict):
+                  raise ValueError("Niepoprawny rekord meczu")
+
+              if not required.issubset(match):
+                  raise ValueError("Brak wymaganych pol")
+
+              if match["league"] not in ("D1", "D2"):
+                  raise ValueError("Nieobslugiwana liga")
+
+              for key in ("home_goals", "away_goals"):
+                  value = match[key]
+                  if type(value) is not int or value < 0:
+                      raise ValueError("Niepoprawna liczba goli")
+
+          d1 = sum(m["league"] == "D1" for m in matches)
+          d2 = sum(m["league"] == "D2" for m in matches)
+          over15 = sum(
+              m["home_goals"] + m["away_goals"] >= 2
+              for m in matches
+          )
+
+          print("Wszystkie mecze:", len(matches))
+          print("Bundesliga:", d1)
+          print("2. Bundesliga:", d2)
+          print("Over 1.5:", over15)
+          print("Baza poprawna.")
+          PY
+
+      - name: Zapisz aktualna baze
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add data/all_matches.json
+
+          if git diff --cached --quiet; then
+            echo "Brak nowych danych."
+          else
+            git commit -m "Aktualizacja bazy meczow"
+            git push
+          fi
