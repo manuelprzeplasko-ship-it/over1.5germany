@@ -138,10 +138,24 @@
           <span>Warunek wstępny</span>
         </div>
       </div>
-      <p class="muted">
-        Generator uruchomimy dopiero po walidacji modelu.
-        Nie będzie wymuszał kuponu.
-      </p>
+      
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
+  <button onclick="runOver15Validation('D1')"
+    style="padding:12px 18px;background:#2563eb;color:white;border:0;border-radius:8px;cursor:pointer;">
+    Test Bundesliga
+  </button>
+
+  <button onclick="runOver15Validation('D2')"
+    style="padding:12px 18px;background:#2563eb;color:white;border:0;border-radius:8px;cursor:pointer;">
+    Test 2. Bundesliga
+  </button>
+</div>
+
+<pre id="validation-over15-result"
+  style="white-space:pre-wrap;overflow-wrap:anywhere;background:#101b2f;padding:16px;border-radius:10px;margin-top:16px;color:#e5edf7;">
+Wybierz ligę, aby uruchomić walidację.
+</pre>
+
     </section>
 
     <section class="panel">
@@ -232,6 +246,219 @@ async function loadGermanyData() {
 }
 
 loadGermanyData();
+</script>
+
+  
+<script>
+async function runOver15Validation(league) {
+  const output = document.getElementById("validation-over15-result");
+  const leagueName = league === "D1" ? "Bundesliga" : "2. Bundesliga";
+
+  output.textContent = "Trwa test: " + leagueName + "...";
+
+  try {
+    const response = await fetch("./data/all_matches.json?ts=" + Date.now());
+    if (!response.ok) throw new Error("Nie można pobrać bazy");
+
+    const all = await response.json();
+
+    const matches = all
+      .filter(m =>
+        m.league === league &&
+        typeof m.date === "string" &&
+        typeof m.home === "string" &&
+        typeof m.away === "string" &&
+        Number.isInteger(m.home_goals) &&
+        Number.isInteger(m.away_goals) &&
+        m.home_goals >= 0 &&
+        m.away_goals >= 0
+      )
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    if (matches.length < 300) {
+      throw new Error("Za mało meczów do testu");
+    }
+
+    const validationStart = Math.floor(matches.length * 0.60);
+    const testStart = Math.floor(matches.length * 0.80);
+
+    const candidates = [];
+
+    for (const recent of [10, 20, 40]) {
+      for (const poissonWeight of [0, 0.25, 0.5, 0.75, 1]) {
+        const result = evaluateRange(
+          matches, validationStart, testStart,
+          recent, poissonWeight
+        );
+
+        if (result.n >= 50) {
+          candidates.push({
+            recent,
+            poissonWeight,
+            ...result
+          });
+        }
+      }
+    }
+
+    if (!candidates.length) {
+      throw new Error("Brak wystarczających prognoz walidacyjnych");
+    }
+
+    candidates.sort((a, b) =>
+      a.brier - b.brier || a.logLoss - b.logLoss
+    );
+
+    const best = candidates[0];
+
+    const selectedTest = evaluateRange(
+      matches, testStart, matches.length,
+      best.recent, best.poissonWeight
+    );
+
+    const historyTest = evaluateRange(
+      matches, testStart, matches.length,
+      best.recent, 0
+    );
+
+    const poissonTest = evaluateRange(
+      matches, testStart, matches.length,
+      best.recent, 1
+    );
+
+    function percent(value) {
+      return (value * 100).toFixed(1) + "%";
+    }
+
+    function formatResult(label, result) {
+      if (!result.n) return label + "\nBrak prognoz\n";
+
+      return (
+        label + "\n" +
+        "  Mecze: " + result.n + "\n" +
+        "  Brier: " + result.brier.toFixed(4) + "\n" +
+        "  Log Loss: " + result.logLoss.toFixed(4) + "\n" +
+        "  Śr. prognoza: " + percent(result.meanP) + "\n" +
+        "  Rzeczywiste Over 1,5: " + percent(result.actual) + "\n"
+      );
+    }
+
+    output.textContent =
+      "LIGA: " + leagueName + "\n\n" +
+      "Walidacja od: " + matches[validationStart].date + "\n" +
+      "Test od: " + matches[testStart].date + "\n\n" +
+      "PARAMETRY WYBRANE NA WALIDACJI\n" +
+      "Ostatnie mecze: " + best.recent + "\n" +
+      "Udział Poissona: " + percent(best.poissonWeight) + "\n\n" +
+      formatResult("WALIDACJA", best) + "\n" +
+      formatResult("TEST — MODEL WYBRANY", selectedTest) + "\n" +
+      formatResult("TEST — CZĘSTOŚĆ HISTORYCZNA", historyTest) + "\n" +
+      formatResult("TEST — POISSON", poissonTest) + "\n" +
+      "Uwaga: pojedynczy podział czasowy. Wynik nie potwierdza dodatniego EV.";
+
+  } catch (error) {
+    output.textContent = "BŁĄD: " + error.message;
+  }
+}
+
+function evaluateRange(matches, start, end, recent, poissonWeight) {
+  let n = 0;
+  let brier = 0;
+  let logLoss = 0;
+  let sumP = 0;
+  let sumY = 0;
+
+  for (let i = start; i < end; i++) {
+    const match = matches[i];
+    const history = matches.slice(0, i)
+      .filter(m => m.date < match.date);
+
+    const prediction = predictOver15(
+      history, match.home, match.away, recent, poissonWeight
+    );
+
+    if (prediction === null) continue;
+
+    const y = match.home_goals + match.away_goals >= 2 ? 1 : 0;
+    const p = Math.max(0.01, Math.min(0.99, prediction));
+
+    n++;
+    brier += (p - y) ** 2;
+    logLoss -= y * Math.log(p) + (1 - y) * Math.log(1 - p);
+    sumP += p;
+    sumY += y;
+  }
+
+  return {
+    n,
+    brier: n ? brier / n : NaN,
+    logLoss: n ? logLoss / n : NaN,
+    meanP: n ? sumP / n : NaN,
+    actual: n ? sumY / n : NaN
+  };
+}
+
+function predictOver15(history, home, away, recent, poissonWeight) {
+  if (history.length < 100) return null;
+
+  const homeGames = history.filter(m => m.home === home).slice(-recent);
+  const awayGames = history.filter(m => m.away === away).slice(-recent);
+
+  if (homeGames.length < 5 || awayGames.length < 5) return null;
+
+  const leagueRate = history.reduce(
+    (sum, m) => sum + (m.home_goals + m.away_goals >= 2 ? 1 : 0), 0
+  ) / history.length;
+
+  const homeRate = homeGames.filter(
+    m => m.home_goals + m.away_goals >= 2
+  ).length / homeGames.length;
+
+  const awayRate = awayGames.filter(
+    m => m.home_goals + m.away_goals >= 2
+  ).length / awayGames.length;
+
+  const historicalP = 0.5 * leagueRate +
+    0.25 * homeRate + 0.25 * awayRate;
+
+  const leagueHomeGoals = history.reduce(
+    (sum, m) => sum + m.home_goals, 0
+  ) / history.length;
+
+  const leagueAwayGoals = history.reduce(
+    (sum, m) => sum + m.away_goals, 0
+  ) / history.length;
+
+  const avg = (games, field) =>
+    games.reduce((sum, m) => sum + m[field], 0) / games.length;
+
+  const homeAttack = avg(homeGames, "home_goals") /
+    Math.max(0.2, leagueHomeGoals);
+
+  const awayDefense = avg(awayGames, "home_goals") /
+    Math.max(0.2, leagueHomeGoals);
+
+  const awayAttack = avg(awayGames, "away_goals") /
+    Math.max(0.2, leagueAwayGoals);
+
+  const homeDefense = avg(homeGames, "away_goals") /
+    Math.max(0.2, leagueAwayGoals);
+
+  const expectedHome = Math.max(
+    0.2, Math.min(4, leagueHomeGoals * homeAttack * awayDefense)
+  );
+
+  const expectedAway = Math.max(
+    0.2, Math.min(4, leagueAwayGoals * awayAttack * homeDefense)
+  );
+
+  const lambda = expectedHome + expectedAway;
+
+  const poissonP = 1 - Math.exp(-lambda) * (1 + lambda);
+
+  return (1 - poissonWeight) * historicalP +
+    poissonWeight * poissonP;
+}
 </script>
 
 </body>
