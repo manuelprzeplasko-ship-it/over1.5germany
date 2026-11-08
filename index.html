@@ -1,12 +1,165 @@
+
 <!DOCTYPE html>
 <html lang="pl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Germany Over 1,5 Lab</title>
+  <title>Germany Over 1,5 Lab 1.0</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #0b1220;
+      color: #e5edf7;
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+    }
+    header {
+      padding: 32px 18px;
+      text-align: center;
+      background: #111d32;
+      border-bottom: 2px solid #d4aa48;
+    }
+    h1 { color: #f4cb65; margin: 0 0 8px; }
+    h2 { color: #f4cb65; margin-top: 0; }
+    .subtitle { color: #b8c7dc; margin: 0; }
+    main { max-width: 950px; margin: auto; padding: 22px 14px; }
+    .panel {
+      background: #17243b;
+      border: 1px solid #30415c;
+      border-radius: 14px;
+      padding: 22px;
+      margin-bottom: 20px;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .stat {
+      background: #101b2f;
+      padding: 16px;
+      border-radius: 10px;
+    }
+    .stat strong {
+      display: block;
+      font-size: 25px;
+      color: #f4cb65;
+    }
+    .stat span { color: #b8c7dc; font-size: 13px; }
+    .notice { color: #c4d0e1; }
+    .status { color: #f4cb65; font-weight: bold; }
+    .muted { color: #94a8c3; }
+    .pill {
+      display: inline-block;
+      border: 1px solid #496080;
+      padding: 5px 10px;
+      border-radius: 20px;
+      margin: 4px 5px 4px 0;
+    }
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: #8fa4c0;
+      font-size: 13px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Germany Over 1,5 Lab 1.0</h1>
-  <p>Przygotowujemy analizę Over 1,5 dla lig niemieckich.</p>
+  <header>
+    <h1>Germany Over 1,5 Lab 1.0</h1>
+    <p class="subtitle">
+      Bundesliga + 2. Bundesliga | Analiza Over 1,5
+    </p>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>Historyczna baza meczów</h2>
+      <p id="data-status" class="status">
+        Oczekiwanie na podłączenie danych...
+      </p>
+
+      <div class="stats">
+        <div class="stat">
+          <strong id="total-matches">—</strong>
+          <span>Wszystkie mecze</span>
+        </div>
+        <div class="stat">
+          <strong id="d1-matches">—</strong>
+          <span>Bundesliga</span>
+        </div>
+        <div class="stat">
+          <strong id="d2-matches">—</strong>
+          <span>2. Bundesliga</span>
+        </div>
+        <div class="stat">
+          <strong id="over15-rate">—</strong>
+          <span>Historyczny Over 1,5</span>
+        </div>
+      </div>
+      <p id="date-range" class="muted"></p>
+    </section>
+
+    <section class="panel">
+      <h2>Walidacja modelu Over 1,5</h2>
+      <p class="notice">
+        Najpierw sprawdzimy prognozy na historycznych
+        meczach. Porównamy model Poissona z częstością
+        historyczną osobno dla każdej ligi.
+      </p>
+      <span class="pill">Brier Score</span>
+      <span class="pill">Log Loss</span>
+      <span class="pill">Test chronologiczny</span>
+      <p class="muted">
+        Przyciski testowe dodamy po podłączeniu bazy.
+      </p>
+    </section>
+
+    <section class="panel">
+      <h2>Generator Over 1,5 — TRIPLE / FOURFOLD</h2>
+      <p class="notice">
+        Docelowo wybierzemy 3 lub 4 spotkania.
+        Każde musi przejść kontrolę jakości prognozy
+        i szacowanego EV.
+      </p>
+      <div class="stats">
+        <div class="stat">
+          <strong>3–4</strong>
+          <span>Liczba spotkań</span>
+        </div>
+        <div class="stat">
+          <strong>2,00</strong>
+          <span>Minimalny kurs łączny</span>
+        </div>
+        <div class="stat">
+          <strong>EV &gt; 0</strong>
+          <span>Warunek wstępny</span>
+        </div>
+      </div>
+      <p class="muted">
+        Generator uruchomimy dopiero po walidacji modelu.
+        Nie będzie wymuszał kuponu.
+      </p>
+    </section>
+
+    <section class="panel">
+      <h2>Zasady analizy</h2>
+      <p>
+        Dodatnie szacowane EV nie gwarantuje zysku.
+        Łączenie kilku spotkań zwiększa ryzyko
+        przegrania całego kuponu.
+      </p>
+      <p class="muted">
+        Aplikacja służy do eksperymentów statystycznych,
+        a nie do przewidywania pewnych wyników.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    Germany Over 1,5 Lab 1.0
+  </footer>
 </body>
 </html>
