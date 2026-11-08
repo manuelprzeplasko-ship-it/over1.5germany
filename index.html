@@ -161,5 +161,78 @@
   <footer>
     Germany Over 1,5 Lab 1.0
   </footer>
+  
+<script>
+async function loadGermanyData() {
+  const status = document.getElementById("data-status");
+  const total = document.getElementById("total-matches");
+  const d1 = document.getElementById("d1-matches");
+  const d2 = document.getElementById("d2-matches");
+  const rate = document.getElementById("over15-rate");
+  const range = document.getElementById("date-range");
+
+  try {
+    status.textContent = "Wczytywanie bazy meczów...";
+
+    const response = await fetch(
+      "./data/all_matches.json?ts=" + Date.now()
+    );
+
+    if (!response.ok) {
+      throw new Error("HTTP " + response.status);
+    }
+
+    const matches = await response.json();
+
+    if (!Array.isArray(matches) || matches.length === 0) {
+      throw new Error("Baza jest pusta lub niepoprawna");
+    }
+
+    const valid = matches.filter(m =>
+      (m.league === "D1" || m.league === "D2") &&
+      typeof m.date === "string" &&
+      Number.isInteger(m.home_goals) &&
+      Number.isInteger(m.away_goals) &&
+      m.home_goals >= 0 &&
+      m.away_goals >= 0
+    );
+
+    if (valid.length === 0) {
+      throw new Error("Brak poprawnych meczów");
+    }
+
+    const bundesliga = valid.filter(m => m.league === "D1");
+    const secondLiga = valid.filter(m => m.league === "D2");
+
+    const over15 = valid.filter(m =>
+      m.home_goals + m.away_goals >= 2
+    );
+
+    const dates = valid.map(m => m.date).sort();
+
+    total.textContent = valid.length.toLocaleString("pl-PL");
+    d1.textContent = bundesliga.length.toLocaleString("pl-PL");
+    d2.textContent = secondLiga.length.toLocaleString("pl-PL");
+
+    rate.textContent =
+      (100 * over15.length / valid.length).toFixed(1)
+        .replace(".", ",") + "%";
+
+    range.textContent =
+      "Zakres danych: " + dates[0] +
+      " – " + dates[dates.length - 1];
+
+    status.textContent = "Baza została wczytana poprawnie.";
+    status.style.color = "#7ee0a0";
+
+  } catch (error) {
+    status.textContent = "Błąd wczytywania danych: " + error.message;
+    status.style.color = "#ff9b9b";
+  }
+}
+
+loadGermanyData();
+</script>
+
 </body>
 </html>
